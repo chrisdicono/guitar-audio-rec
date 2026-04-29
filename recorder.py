@@ -5,6 +5,7 @@ them to a folder to be reviewed individually.
 import sounddevice as sd
 import soundfile as sf
 import numpy as np
+import librosa
 import time
 import os
 import msvcrt
@@ -88,14 +89,17 @@ def record_batch():
 
     # 4. recording loop
     i = 0
-    while i <= num_samples:
+    while i <= num_samples:       
+        # wait for user to press enter when ready
+        clear_input_buffer()
+        ipt = input(f"[{i}/{num_samples}] Press enter to start recording.")
+        if ipt == "r":
+            i = i - 1
+            print(f"[{i}/{num_samples}] RETAKE - Press enter to start recording.")
+
         # create filename and filepath
         filename = f"{filename_prefix}_{(start_filename_index + i):02d}.wav"
         filepath = os.path.join(review_folder, filename)
-        
-        # wait for user to press enter when ready
-        clear_input_buffer()
-        input(f"[{i}/{num_samples}] Press enter to start recording.")
         
         # countdown
         countdown(pause_before)
@@ -120,13 +124,16 @@ def record_batch():
             
         
         # trim silence
-        ...
+        sample_trimmed, index = librosa.effects.trim(y, top_db=20)
         
         # normalize (after trimming)
-        ...
+        target_peak = 0.9
+        max_peak = np.max(np.abs(sample_trimmed))
+        if max_peak > 0:
+            sample_trim_norm = sample_trimmed * (target_peak / max_peak)
         
         # save wav file
-        sf.write(filepath, sample, sample_rate)
+        sf.write(filepath, sample_trim_norm, sample_rate)
         print(f"Saved: {filename}")
 
     # 5. print summary after done
