@@ -4,6 +4,7 @@ them to a folder to be reviewed individually.
 """
 import sounddevice as sd
 import soundfile as sf
+import numpy as np
 import time
 import os
 import msvcrt
@@ -47,6 +48,26 @@ def countdown(total_secs):
             break
         time.sleep(0.01)
 
+# checks if a sample could contain audio that is clipping
+def detect_clipping(sample):
+    peak = np.max(np.abs(sample))
+    if peak >= 0.99:
+        print(f"CLIPPING DETECTED (peak: {peak:.3f}) - consider re-recording.")
+        return True
+    return False
+
+# promts the user to make a decision in case of a potential need for a retake
+def prompt_retake():
+    clear_input_buffer()
+    res = input("Choose what to do after recording this sample:" \
+          "  r - retake" \
+          "  n - move on to next take" \
+          "  q - quit early")
+    if (res != "r" or res != "n" or res != "q"):
+        print("Error: Please input one of the listed options.")
+        return prompt_retake()
+    return res
+
 # record a batch of samples based on config values
 def record_batch():
     # 1. print recording info
@@ -66,15 +87,15 @@ def record_batch():
     start_filename_index = len(similar_filenames) + 1
 
     # 4. recording loop
-    for i in range(start_filename_index, start_filename_index + num_samples):
+    i = 0
+    while i <= num_samples:
         # create filename and filepath
-        filename = f"{filename_prefix}_{i:02d}.wav"
+        filename = f"{filename_prefix}_{(start_filename_index + i):02d}.wav"
         filepath = os.path.join(review_folder, filename)
         
         # wait for user to press enter when ready
         clear_input_buffer()
-        j = i - start_filename_index + 1
-        input(f"[{j}/{num_samples}] Press enter to start recording.")
+        input(f"[{i}/{num_samples}] Press enter to start recording.")
         
         # countdown
         countdown(pause_before)
@@ -87,7 +108,16 @@ def record_batch():
         print("Recording finished! Saving to file.")
         
         # detect clipping (if so, prompt retake)
-        ...
+        has_clipped = detect_clipping(sample)
+        if has_clipped:
+            res = prompt_retake()
+            if res == "r":
+                i = i - 1
+            if res == "n":
+                pass
+            if res == "q":
+                break
+            
         
         # trim silence
         ...
@@ -95,19 +125,9 @@ def record_batch():
         # normalize (after trimming)
         ...
         
-        # waveform preview (optional)
-        ...
-        
         # save wav file
         sf.write(filepath, sample, sample_rate)
         print(f"Saved: {filename}")
-        
-        # BELOW IS OPTIONAL, ONLY DONE IF THE USER SETS A FLAG TO BE TRUE
-            # wait for user confirmations. options:
-                # r - retake
-                # q - quit early
-                # n - move on to next take
-        ...
 
     # 5. print summary after done
     ...
