@@ -124,7 +124,7 @@ def record_batch():
             
         
         # trim silence
-        sample_trimmed, index = librosa.effects.trim(y, top_db=20)
+        sample_trimmed, index = librosa.effects.trim(sample, top_db=20)
         
         # normalize (after trimming)
         target_peak = 0.9
