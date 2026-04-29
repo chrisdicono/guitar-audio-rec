@@ -137,7 +137,7 @@ def record_batch():
         print(f"Saved: {filename}")
 
     # 5. print summary after done
-    ...
+    print(f"Done! {i} samples saved to {base_folder}\\to_review")
 
 # main function
 if __name__ == "__main__":
@@ -145,7 +145,6 @@ if __name__ == "__main__":
     # list_devices()
     if input_device:
         sd.default.device = input_device, None
-        print("hi")
     record_batch()
 
 """ Notes:
