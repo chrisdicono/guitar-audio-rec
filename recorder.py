@@ -45,7 +45,7 @@ def countdown(total_secs):
     while True:
         elapsed = (time.time() - start) * 1000
         remaining = max(0, total_ms - int(elapsed))
-        print(f"Recording in: {remaining / 1000}s", end='\r')
+        print(f"  Recording in: {remaining / 1000}s", end='\r')
         if remaining == 0:
             break
         time.sleep(0.01)
@@ -54,7 +54,7 @@ def countdown(total_secs):
 def detect_clipping(sample):
     peak = np.max(np.abs(sample))
     if peak >= 0.99:
-        print(f"CLIPPING DETECTED (peak: {peak:.3f}) - consider re-recording.")
+        print(f"  CLIPPING DETECTED (peak: {peak:.3f}) - consider re-recording.")
         return True
     return False
 
@@ -62,13 +62,13 @@ def detect_clipping(sample):
 def prompt_retake():
     clear_input_buffer()
     while True:
-        res = input("Choose what to do after recording this sample:\n" \
-            "  r - retake\n" \
-            "  n - move on to next take\n" \
-            "  q - quit early\n").strip().lower()
+        res = input("  Choose what to do after recording this sample:\n" \
+            "    r - retake\n" \
+            "    n - move on to next take\n" \
+            "    q - quit early\n").strip().lower()
         if res in {"r", "n", "q"}:
             return res
-        print("Error: Please input one of the listed options.")
+        print("  Error: Please input one of the listed options.")
         
 # provides a list of available file numbers to record to given a prefix for a filename
 def get_available_indices(files, prefix, count):
@@ -129,13 +129,13 @@ def record_batch():
         
         # countdown
         countdown(pause_before)
-        print(f"Recording ({duration}s)... ", end='\r')
+        print(f"  Recording ({duration}s)... ", end='\r')
         
         # record
         sample = sd.rec(int(sample_rate * duration), samplerate=sample_rate,
                         channels=channels, dtype='float32')
         sd.wait()
-        print("Recording finished! Saving to file.")
+        print("  Recording finished!")
         
         # detect clipping (if so, prompt retake)
         has_clipped = detect_clipping(sample)
@@ -154,9 +154,9 @@ def record_batch():
         sample = sample.flatten()
         sample_trimmed, index = librosa.effects.trim(sample, top_db=10)
         if len(sample_trimmed) == 0:
-            print("Trimmed audio is empty. Need to retake.")
+            print("  Trimmed audio is empty. Need to retake.")
             continue
-        print("Trimmed silence!")
+        print("  Trimmed silence!")
         
         # normalize (after trimming)
         target_peak = 0.9
@@ -165,12 +165,12 @@ def record_batch():
             sample_trim_norm = sample_trimmed * (target_peak / max_peak)
         else:
             sample_trim_norm = sample_trimmed
-        print("Normalized!")
+        print("  Normalized!")
         
         # save wav file
         sf.write(filepath, sample_trim_norm, sample_rate)
         num_saved += 1
-        print(f"Saved: {filename}")
+        print(f"  Saved: {filename}")
         i += 1
 
     # 5. print summary after done
