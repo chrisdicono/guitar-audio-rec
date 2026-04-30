@@ -111,7 +111,7 @@ def record_batch():
         
         # record
         sample = sd.rec(int(sample_rate * duration), samplerate=sample_rate,
-                        channels=channels, dtype='float64')
+                        channels=channels, dtype='float32')
         sd.wait()
         print("Recording finished! Saving to file.")
         
@@ -130,7 +130,11 @@ def record_batch():
         
         # trim silence
         sample = sample.flatten()
-        sample_trimmed, index = librosa.effects.trim(sample, top_db=20)
+        sample_trimmed, index = librosa.effects.trim(sample, top_db=10)
+        if len(sample_trimmed) == 0:
+            print("Trimmed audio is empty. Need to retake.")
+            i = i - 1
+            continue
         print("Trimmed silence!")
         
         # normalize (after trimming)
