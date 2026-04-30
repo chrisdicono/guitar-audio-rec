@@ -110,6 +110,7 @@ def record_batch():
     # 4. recording loop
     num_saved = 0
     i = 1
+    min_retake = 2
     while i <= num_samples:
         # create filename and filepath
         filename = f"{filename_prefix}_{indices[i - 1]:03d}.wav"
@@ -118,11 +119,9 @@ def record_batch():
         # wait for user to press enter when ready
         clear_input_buffer()
         ipt = input(f"[{i}/{num_samples}] Press enter to start recording.")
-        if ipt == "r" and i > 1:
-            if os.path.exists(filepath):
-                os.remove(filepath)
-            i = i - 1
-            print(f"RETAKING sample {i}/{num_samples}.")
+        if ipt == "r" and i >= min_retake:
+            print(f"RETAKING sample {i - 1}/{num_samples}.")
+            i -= 1
             continue
         if ipt == "q":
             break
@@ -141,8 +140,8 @@ def record_batch():
         has_clipped = detect_clipping(sample)
         if has_clipped:
             res = prompt_retake().strip().lower()
-            if res == "r" and i > 1:
-                i = i - 1
+            if res == "r" and i >= min_retake:
+                i -= 1
                 continue
             if res == "n":
                 pass
@@ -155,7 +154,6 @@ def record_batch():
         sample_trimmed, index = librosa.effects.trim(sample, top_db=10)
         if len(sample_trimmed) == 0:
             print("Trimmed audio is empty. Need to retake.")
-            i = i - 1
             continue
         print("Trimmed silence!")
         
