@@ -144,7 +144,6 @@ def record_batch():
         if has_clipped:
             res = prompt_retake().strip().lower()
             if res == "r" and i >= min_retake:
-                i -= 1
                 continue
             if res == "n":
                 pass
