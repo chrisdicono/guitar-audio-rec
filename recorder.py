@@ -5,6 +5,7 @@ them to a folder to be reviewed individually.
 import sounddevice as sd
 import soundfile as sf
 import numpy as np
+import re
 import librosa
 import time
 import os
@@ -60,13 +61,32 @@ def detect_clipping(sample):
 # promts the user to make a decision in case of a potential need for a retake
 def prompt_retake():
     clear_input_buffer()
-    res = input("Choose what to do after recording this sample:\n" \
-          "  r - retake\n" \
-          "  n - move on to next take\n" \
-          "  q - quit early\n").strip().lower()
-    if (res != "r" and res != "n" and res != "q"):
+    while True:
+        res = input("Choose what to do after recording this sample:\n" \
+            "  r - retake\n" \
+            "  n - move on to next take\n" \
+            "  q - quit early\n").strip().lower()
+        if res in {"r", "n", "q"}:
+            return res
         print("Error: Please input one of the listed options.")
-        return prompt_retake()
+        
+# provides a list of available file numbers to record to given a prefix for a filename
+def get_available_indices(files, prefix, count):
+    pattern = re.compile(rf"{re.escape(prefix)}_(\d+)\.wav")
+    
+    used = set()
+    for f in files:
+        match = pattern.match(f)
+        if match:
+            used.add(int(match.group(1)))
+    
+    res = []
+    i = 1
+    while len(res) < count:
+        if i not in used:
+            res.append(i)
+        i += 1
+
     return res
 
 # record a batch of samples based on config values
@@ -85,25 +105,27 @@ def record_batch():
     # 3. determine file numbers (any existing files with same prefix?)
     similar_filenames = [f for f in os.listdir(review_folder) 
                          if f.startswith(filename_prefix) and f.endswith(".wav")]
-    start_filename_index = len(similar_filenames) + 1
+    indices = get_available_indices(similar_filenames, filename_prefix, num_samples)
 
     # 4. recording loop
     num_saved = 0
     i = 1
-    while i <= num_samples:       
+    while i <= num_samples:
+        # create filename and filepath
+        filename = f"{filename_prefix}_{indices[i - 1]:03d}.wav"
+        filepath = os.path.join(review_folder, filename)
+        
         # wait for user to press enter when ready
         clear_input_buffer()
         ipt = input(f"[{i}/{num_samples}] Press enter to start recording.")
         if ipt == "r" and i > 1:
+            if os.path.exists(filepath):
+                os.remove(filepath)
             i = i - 1
             print(f"RETAKING sample {i}/{num_samples}.")
             continue
         if ipt == "q":
             break
-
-        # create filename and filepath
-        filename = f"{filename_prefix}_{(start_filename_index + i - 1):02d}.wav"
-        filepath = os.path.join(review_folder, filename)
         
         # countdown
         countdown(pause_before)
@@ -128,7 +150,7 @@ def record_batch():
                 break
             
         
-        # trim silence
+        # trim silence (TODO: librosa is nice but could be more lightweight)
         sample = sample.flatten()
         sample_trimmed, index = librosa.effects.trim(sample, top_db=10)
         if len(sample_trimmed) == 0:
