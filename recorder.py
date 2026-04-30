@@ -60,11 +60,11 @@ def detect_clipping(sample):
 # promts the user to make a decision in case of a potential need for a retake
 def prompt_retake():
     clear_input_buffer()
-    res = input("Choose what to do after recording this sample:" \
-          "  r - retake" \
-          "  n - move on to next take" \
-          "  q - quit early")
-    if (res != "r" or res != "n" or res != "q"):
+    res = input("Choose what to do after recording this sample:\n" \
+          "  r - retake\n" \
+          "  n - move on to next take\n" \
+          "  q - quit early\n").strip().lower()
+    if (res != "r" and res != "n" and res != "q"):
         print("Error: Please input one of the listed options.")
         return prompt_retake()
     return res
@@ -88,17 +88,21 @@ def record_batch():
     start_filename_index = len(similar_filenames) + 1
 
     # 4. recording loop
-    i = 0
+    num_saved = 0
+    i = 1
     while i <= num_samples:       
         # wait for user to press enter when ready
         clear_input_buffer()
         ipt = input(f"[{i}/{num_samples}] Press enter to start recording.")
-        if ipt == "r":
+        if ipt == "r" and i > 1:
             i = i - 1
-            print(f"[{i}/{num_samples}] RETAKE - Press enter to start recording.")
+            print(f"RETAKING sample {i}/{num_samples}.")
+            continue
+        if ipt == "q":
+            break
 
         # create filename and filepath
-        filename = f"{filename_prefix}_{(start_filename_index + i):02d}.wav"
+        filename = f"{filename_prefix}_{(start_filename_index + i - 1):02d}.wav"
         filepath = os.path.join(review_folder, filename)
         
         # countdown
@@ -114,9 +118,10 @@ def record_batch():
         # detect clipping (if so, prompt retake)
         has_clipped = detect_clipping(sample)
         if has_clipped:
-            res = prompt_retake()
-            if res == "r":
+            res = prompt_retake().strip().lower()
+            if res == "r" and i > 1:
                 i = i - 1
+                continue
             if res == "n":
                 pass
             if res == "q":
@@ -124,20 +129,27 @@ def record_batch():
             
         
         # trim silence
+        sample = sample.flatten()
         sample_trimmed, index = librosa.effects.trim(sample, top_db=20)
+        print("Trimmed silence!")
         
         # normalize (after trimming)
         target_peak = 0.9
         max_peak = np.max(np.abs(sample_trimmed))
         if max_peak > 0:
             sample_trim_norm = sample_trimmed * (target_peak / max_peak)
+        else:
+            sample_trim_norm = sample_trimmed
+        print("Normalized!")
         
         # save wav file
         sf.write(filepath, sample_trim_norm, sample_rate)
+        num_saved += 1
         print(f"Saved: {filename}")
+        i += 1
 
     # 5. print summary after done
-    print(f"Done! {i} samples saved to {base_folder}\\to_review")
+    print(f"Done! {num_saved} samples saved to {base_folder}\\to_review")
 
 # main function
 if __name__ == "__main__":
