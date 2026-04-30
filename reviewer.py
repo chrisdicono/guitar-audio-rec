@@ -19,8 +19,9 @@ os.makedirs(accept_folder, exist_ok=True)
 # play the given audio file
 def play_file(filepath):
     data, sr = sf.read(filepath, dtype="float32")
-    sd.play(data, sr)
-    sd.wait()
+    sd.stop()
+    with sd.OutputStream(samplerate=sr, channels=1) as s:
+        s.write(data)
 
 # reviews each sample in the "to_review" folder based on user input
 def review_samples():
@@ -70,14 +71,14 @@ def review_samples():
                 shutil.move(filepath, dest)
                 print("  File moved to approved folder.")
                 kept += 1
-                continue
+                break
             elif choice == "d":
                 confirm = input("  Confirm delete? (y/n): ").strip().lower()
                 if confirm == "y":
                     os.remove(filepath)
                     print(f"  Deleted file {i}.")
                     deleted += 1
-                    continue
+                    break
                 else:
                     print("  Delete cancelled.")
                     continue
@@ -87,10 +88,10 @@ def review_samples():
             elif choice == "s":
                 print(f"  Skipped file {i}.")
                 skipped += 1
-                continue
+                break
             elif choice == "q":
                 print("Quitting sample review early.")
-                break
+                return
             else:
                 print("  Invalid input. Use k/d/r/s/q.")
 
