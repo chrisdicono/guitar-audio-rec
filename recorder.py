@@ -118,9 +118,10 @@ def record_batch():
         
         # wait for user to press enter when ready
         clear_input_buffer()
-        ipt = input(f"[{i}/{num_samples}] Press enter to start recording.")
+        ipt = input(f"[{i}/{num_samples}] Press enter to start recording. ")
         if ipt == "r" and i >= min_retake:
             print(f"RETAKING sample {i - 1}/{num_samples}.")
+            num_saved -= 1
             i -= 1
             continue
         if ipt == "q":
