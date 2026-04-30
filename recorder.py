@@ -74,12 +74,14 @@ def prompt_retake():
 def get_available_indices(files, prefix, count):
     pattern = re.compile(rf"{re.escape(prefix)}_(\d+)\.wav")
     
+    # fill a set of all used file numbers
     used = set()
     for f in files:
         match = pattern.match(f)
         if match:
             used.add(int(match.group(1)))
     
+    # fill an array with the first _count_ free file numbers
     res = []
     i = 1
     while len(res) < count:
