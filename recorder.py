@@ -20,7 +20,7 @@ note_label = "0-00"             # string (0-5) and fret (0-12) of the note
 sample_rate = 48000             # sample rate of recording (match with StringSense)
 duration = 1.0                  # duration of each recording
 num_samples = 60                # number of recordings in one batch
-input_device = None             # None = default, or set the device index manually
+input_device = 2                # None = default, or set the device index manually
 channels = 1                    # number of channels (1 for mono, 2 for stereo)
 pause_before = 1.0              # seconds to wait before a recording
 
@@ -179,7 +179,7 @@ def record_batch():
 
 # main function
 if __name__ == "__main__":
-    # call list_devices() to find what index your preferred input_device is
+    # uncomment below to find what index your preferred input_device is
     # list_devices()
     if input_device:
         sd.default.device = input_device, None
