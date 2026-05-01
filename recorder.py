@@ -26,7 +26,9 @@ pause_before = 1.0              # seconds to wait before a recording
 
 # initialize folder and environment
 review_folder = os.path.join(base_folder, "to_review")
+accept_folder = os.path.join(base_folder, "accepted")
 os.makedirs(review_folder, exist_ok=True)
+os.makedirs(accept_folder, exist_ok=True)
 
 # list input devices
 def list_devices():
@@ -36,6 +38,16 @@ def list_devices():
 def clear_input_buffer():
     while msvcrt.kbhit():
         msvcrt.getch()
+        
+# gets the count of a file with the given prefix in the accepted
+# folder and the to_review folder
+def get_acc_rev(prefix):
+    acc = [f for f in os.listdir(accept_folder) if 
+           f.startswith(prefix) and f.endswith(".wav")]
+    rev = [f for f in os.listdir(review_folder) if 
+           f.startswith(prefix) and f.endswith(".wav")]
+    return [len(acc), len(rev)]
+    
     
 # displays a countdown of the given number 
 # of seconds to two/three decimal points
@@ -93,16 +105,18 @@ def get_available_indices(files, prefix, count):
 
 # record a batch of samples based on config values
 def record_batch():
-    # 1. print recording info
+    # 1. create prefix to be used in filenames
+    filename_prefix = f"{input_type}_{guitar}_{pickup}_{note_label}"
+    
+    # 2. print recording info
+    identical_acc, identical_rev = get_acc_rev(filename_prefix)
     print('=' * 65)
     print("Guitar Note Sample Recorder --- :)")
     print(f"Input Type: {input_type} | Guitar: {guitar} | Pickup: {pickup}")
     print(f"String/Fret: {note_label} | Duration: {duration}s | Samples: {num_samples}")
+    print(f"Identical prefixes --- Accepted: {identical_acc} | Review Needed: {identical_rev}")
     print(f"Saving to: {review_folder}")
     print('=' * 65)
-    
-    # 2. create prefix to be used in filenames
-    filename_prefix = f"{input_type}_{guitar}_{pickup}_{note_label}"
 
     # 3. determine file numbers (any existing files with same prefix?)
     similar_filenames = [f for f in os.listdir(review_folder) 
