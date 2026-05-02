@@ -26,16 +26,17 @@ def play_file(filepath):
 # reviews each sample in the "to_review" folder based on user input
 def review_samples():
     # 1. retreive a list of all audio files in "to_review" folder
-    files = sorted([f for f in os.listdir(review_folder) if f.endswith(".wav")])
-    if not files:
+    rev_files = sorted([f for f in os.listdir(review_folder) if f.endswith(".wav")])
+    acc_files = sorted([f for f in os.listdir(accept_folder) if f.endswith(".wav")])
+    if not rev_files:
         print("No files exist to be reviewed! Please record some samples first.")
         return
     
     # 2. list commands
     print('=' * 65)
     print("Guitar Note Sample Reviewer --- :)")
-    print(f"{len(files)} in folder {review_folder}")
-    print(f"Approved to: {accept_folder}")
+    print(f"{len(rev_files)} in folder {review_folder}")
+    print(f"{len(acc_files)} in folder {accept_folder}")
     print('=' * 65)
     print(f"  Controls:")
     print(f"    k - keep (move to approved)")
@@ -50,10 +51,10 @@ def review_samples():
     skipped = 0
 
     # 3. for each file, respond to user decisions
-    for i, filename in enumerate(files, 1):
+    for i, filename in enumerate(rev_files, 1):
         filepath = os.path.join(review_folder, filename)
 
-        print(f"[{i}/{len(files)}] {filename}")
+        print(f"[{i}/{len(rev_files)}] {filename}")
         play_file(filepath)
 
         while True:
