@@ -14,9 +14,9 @@ import msvcrt
 # === config ===
 base_folder = ""                # folder used to save recorded files in
 input_type = "DI"               # input device used ("DI" or "Microphone")
-guitar = "IbanezJem77P"         # guitar used in recording
+guitar = "FenderStrat"          # guitar used in recording
 pickup = "Bridge"               # pickup used in recording
-note_label = "0-00"             # string (0-5) and fret (0-12) of the note
+note_label = "0-01"             # string (0-5) and fret (0-12) of the note
 sample_rate = 48000             # sample rate of recording (match with StringSense)
 duration = 1.0                  # duration of each recording
 num_samples = 60                # number of recordings in one batch
@@ -39,14 +39,14 @@ def clear_input_buffer():
     while msvcrt.kbhit():
         msvcrt.getch()
         
-# gets the count of a file with the given prefix in the accepted
+# returns arrays of files with the given prefix in the accepted
 # folder and the to_review folder
 def get_acc_rev(prefix):
     acc = [f for f in os.listdir(accept_folder) if 
            f.startswith(prefix) and f.endswith(".wav")]
     rev = [f for f in os.listdir(review_folder) if 
            f.startswith(prefix) and f.endswith(".wav")]
-    return [len(acc), len(rev)]
+    return [acc, rev]
     
     
 # displays a countdown of the given number 
@@ -110,18 +110,19 @@ def record_batch():
     
     # 2. print recording info
     identical_acc, identical_rev = get_acc_rev(filename_prefix)
+    acc_len = len(identical_acc)
+    rev_len = len(identical_rev)
     print('=' * 65)
     print("Guitar Note Sample Recorder --- :)")
     print(f"Input Type: {input_type} | Guitar: {guitar} | Pickup: {pickup}")
     print(f"String/Fret: {note_label} | Duration: {duration}s | Samples: {num_samples}")
-    print(f"Identical prefixes --- Accepted: {identical_acc} | Review Needed: {identical_rev}")
+    print(f"Identical prefixes --- Accepted: {acc_len} | Review Needed: {rev_len}")
     print(f"Saving to: {review_folder}")
     print('=' * 65)
 
     # 3. determine file numbers (any existing files with same prefix?)
-    similar_filenames = [f for f in os.listdir(review_folder) 
-                         if f.startswith(filename_prefix) and f.endswith(".wav")]
-    indices = get_available_indices(similar_filenames, filename_prefix, num_samples)
+    fns = identical_acc + identical_rev
+    indices = get_available_indices(fns, filename_prefix, num_samples)
 
     # 4. recording loop
     num_saved = 0
