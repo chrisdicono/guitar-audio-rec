@@ -6,6 +6,7 @@ import soundfile as sf
 import shutil
 import time
 import os
+import msvcrt
 
 # config
 base_folder = ""
@@ -58,7 +59,9 @@ def review_samples():
         play_file(filepath)
 
         while True:
-            choice = input("  (k)eep / (d)elete / (r)eplay / (s)kip / (q)uit: ").strip().lower()
+            print("  (k)eep / (d)elete / (r)eplay / (s)kip / (q)uit: ", end="", flush=True)
+            choice = msvcrt.getch().decode().lower()
+            print(choice)
 
             if choice == "k":
                 dest = os.path.join(accept_folder, filename)
@@ -74,7 +77,9 @@ def review_samples():
                 kept += 1
                 break
             elif choice == "d":
-                confirm = input("  Confirm delete? (y/n): ").strip().lower()
+                print("  Confirm delete? (y/n): ", end="", flush=True)
+                confirm = msvcrt.getch().decode().lower()
+                print(confirm)
                 if confirm == "y":
                     os.remove(filepath)
                     print(f"  Deleted file {i}.")
