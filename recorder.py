@@ -16,7 +16,7 @@ base_folder = ""                # folder used to save recorded files in
 input_type = "DI"               # input device used ("DI" or "Microphone")
 guitar = "FenderStrat"          # guitar used in recording
 pickup = "Bridge"               # pickup used in recording
-note_label = "0-03"             # string (0-5) and fret (0-12) of the note
+note_label = "0-04"             # string (0-5) and fret (0-12) of the note
 sample_rate = 48000             # sample rate of recording (match with StringSense)
 duration = 1.0                  # duration of each recording
 num_samples = 60                # number of recordings in one batch
@@ -119,8 +119,7 @@ def handle_input():
         key = msvcrt.getch()
         if key == b' ':
             paused = not paused
-            print("--- PAUSED --- (Enter - resume, q - quit)"
-                  if paused else "--- RESUMED --- ")
+            print("--- PAUSED --- " if paused else "--- RESUMED --- ")
         elif key == b'q':
             print("--- QUITTING ---")
             quit_flag = True
