@@ -54,7 +54,7 @@ def get_acc_rev(prefix):
     
     
 # displays a countdown of the given number 
-# of seconds to two/three decimal points
+# of seconds to two decimal points
 def countdown(total_secs):
     global paused, quit_flag, retake_flag
     remaining = total_secs
@@ -112,7 +112,7 @@ def get_available_indices(files, prefix, count):
 
     return res
 
-# handles logic to pause and resume automated recording (intermission > 0)
+# handles logic to pause and resume automated recording
 def handle_input():
     global paused, quit_flag, retake_flag
     if msvcrt.kbhit():
