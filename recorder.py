@@ -16,13 +16,17 @@ base_folder = ""                # folder used to save recorded files in
 input_type = "DI"               # input device used ("DI" or "Microphone")
 guitar = "FenderStrat"          # guitar used in recording
 pickup = "Bridge"               # pickup used in recording
-note_label = "0-01"             # string (0-5) and fret (0-12) of the note
+note_label = "0-03"             # string (0-5) and fret (0-12) of the note
 sample_rate = 48000             # sample rate of recording (match with StringSense)
 duration = 1.0                  # duration of each recording
 num_samples = 60                # number of recordings in one batch
 input_device = 2                # None = default, or set the device index manually
 channels = 1                    # number of channels (1 for mono, 2 for stereo)
 pause_before = 1.0              # seconds to wait before a recording
+intermission = 1.0              # seconds between each recording, if desired to be automatic
+paused = False
+quit_flag = False
+retake_flag = False
 
 # initialize folder and environment
 review_folder = os.path.join(base_folder, "to_review")
@@ -52,15 +56,20 @@ def get_acc_rev(prefix):
 # displays a countdown of the given number 
 # of seconds to two/three decimal points
 def countdown(total_secs):
-    total_ms = total_secs * 1000
-    start = time.time()
-    while True:
-        elapsed = (time.time() - start) * 1000
-        remaining = max(0, total_ms - int(elapsed))
-        print(f"  Recording in: {remaining / 1000}s", end='\r')
-        if remaining == 0:
-            break
-        time.sleep(0.01)
+    global paused, quit_flag, retake_flag
+    remaining = total_secs
+    step = 0.01
+    while remaining > 0:
+        handle_input()
+        if quit_flag: return "q"
+        if retake_flag: return "r"
+        if paused:
+            time.sleep(0.05)
+            continue
+        time.sleep(step)
+        remaining -= step
+        print(f"  Recording in: {remaining:.2f}s", end='\r')
+    return "ok"
 
 # checks if a sample could contain audio that is clipping
 def detect_clipping(sample):
@@ -103,6 +112,23 @@ def get_available_indices(files, prefix, count):
 
     return res
 
+# handles logic to pause and resume automated recording (intermission > 0)
+def handle_input():
+    global paused, quit_flag, retake_flag
+    if msvcrt.kbhit():
+        key = msvcrt.getch()
+        if key == b' ':
+            paused = not paused
+            print("--- PAUSED --- (Enter - resume, q - quit)"
+                  if paused else "--- RESUMED --- ")
+        elif key == b'q':
+            print("--- QUITTING ---")
+            quit_flag = True
+            return
+        elif key == b'r':
+            retake_flag = True
+            print("--- RETAKE REQUESTED --- ")
+
 # record a batch of samples based on config values
 def record_batch():
     # 1. create prefix to be used in filenames
@@ -133,22 +159,24 @@ def record_batch():
         filename = f"{filename_prefix}_{indices[i - 1]:03d}.wav"
         filepath = os.path.join(review_folder, filename)
         
-        # wait for user to press enter when ready
-        clear_input_buffer()
-        ipt = input(f"[{i}/{num_samples}] Press enter to start recording. ")
-        if ipt == "r" and i >= min_retake:
-            print(f"RETAKING sample {i - 1}/{num_samples}.")
-            num_saved -= 1
-            i -= 1
-            continue
-        if ipt == "q":
-            break
-        
-        # countdown
-        countdown(pause_before)
-        print(f"  Recording ({duration}s)... ", end='\r')
+        # prepare for recording and handle pause logic
+        print(f"[{i}/{num_samples}] Press space to pause recording cycle. ")
+        cd_res = countdown(intermission + pause_before)
+        if cd_res != "ok":
+            if cd_res == "q": break
+            if cd_res == "r":
+                global retake_flag
+                retake_flag = False
+                if i >= min_retake:
+                    print(f"RETAKING sample {i - 1}/{num_samples}.")
+                    num_saved -= 1
+                    i -= 1
+                continue
+                    
+                
         
         # record
+        print(f"  Recording ({duration}s)... ", end='\r')
         sample = sd.rec(int(sample_rate * duration), samplerate=sample_rate,
                         channels=channels, dtype='float32')
         sd.wait()
