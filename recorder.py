@@ -16,14 +16,14 @@ base_folder = ""                # folder used to save recorded files in
 input_type = "DI"               # input device used ("DI" or "Microphone")
 guitar = "FenderStrat"          # guitar used in recording
 pickup = "Bridge"               # pickup used in recording
-note_label = "0-07"             # string (0-5) and fret (0-12) of the note
+note_label = "0-08"             # string (0-5) and fret (0-12) of the note
 sample_rate = 48000             # sample rate of recording (match with StringSense)
 duration = 1.0                  # duration of each recording
 num_samples = 60                # number of recordings in one batch
 input_device = 2                # None = default, or set the device index manually
 channels = 1                    # number of channels (1 for mono, 2 for stereo)
 pause_before = 1.0              # seconds to wait before a recording
-intermission = 1.0              # seconds between each recording, if desired to be automatic
+extra_wait = 2.0
 paused = False
 quit_flag = False
 retake_flag = False
@@ -160,7 +160,8 @@ def record_batch():
         
         # prepare for recording and handle pause logic
         print(f"[{i}/{num_samples}] Press space to pause recording cycle. ")
-        cd_res = countdown(intermission + pause_before)
+        cd_time = pause_before + extra_wait if i == 1 else pause_before
+        cd_res = countdown(cd_time)
         if cd_res != "ok":
             if cd_res == "q": break
             if cd_res == "r":
